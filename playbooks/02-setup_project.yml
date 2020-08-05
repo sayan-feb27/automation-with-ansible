@@ -1,0 +1,7 @@
+---
+- hosts: playground
+  remote_user: django_user
+  tasks:
+    - name: test connection
+      ping:
+        data: "hey"
