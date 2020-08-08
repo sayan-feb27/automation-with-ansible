@@ -1,0 +1,39 @@
+---
+- hosts: playground
+  remote_user: "{{ deploy_user_name }}"
+  gather_facts: no
+  vars_files:
+    - ../vars/project_vars.yml
+  tasks:
+    - name: create project directory
+      file:
+        path: "{{ project_dir_path }}"
+        owner: "{{ deploy_user_name }}"
+        state: directory
+
+    - name: git config user.name
+      git_config:
+        scope: global
+        name: user.name
+        value: "{{ git_username }}"
+
+    - name: git config user.email
+      git_config:
+        scope: global
+        name: user.email
+        value: "{{ git_email }}"
+
+    - name: clone the repository
+      git:
+        repo: "{{ repository_url }}"
+        dest: "{{ project_dir_path }}"
+        clone: yes
+        key_file: "{{ host_ssh_file_path }}"
+
+    - name: copy .env file
+      template:
+        src: "{{ env_file_src_path }}"
+        dest: "{{ env_file_dest_path }}"
+
+    # create virtual env
+

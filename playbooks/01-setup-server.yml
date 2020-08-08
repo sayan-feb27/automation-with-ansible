@@ -1,11 +1,22 @@
 ---
 - hosts: playground
   remote_user: root
+  gather_facts: no
+  vars_files:
+    - ../vars/project_vars.yml
   tasks:
 
     - name: apt update
       apt:
         update_cache: yes
+
+    - name: install packages
+      apt:
+        name: [
+          'ufw', 'python3-pip', 'python3-dev', 'python3-psycopg2',
+          'libpq-dev', 'build-essential', 'postgresql', 'postgresql-contrib',
+          'nginx', 'curl', 'git']
+        state: present
 
     - name: create group deployers
       group:
@@ -20,24 +31,19 @@
         line: '%deployers ALL=(ALL) NOPASSWD: ALL'
         validate: 'visudo -cf %s'
 
-    - name: create django_user
+    - name: create deploy user
       user:
-        name: django_user
+        name: "{{ deploy_user_name }}"
         groups: deployers
         append: yes
         state: present
 
     - name: Set up authorized keys for the deployer user
       authorized_key:
-        user: django_user
+        user: "{{ deploy_user_name }}"
         key: "{{ lookup('file', lookup('env','HOME') + '/.ssh/id_rsa.pub') }}"
         state: present
         exclusive: yes
-
-    - name: install ufw
-      apt:
-        name: ufw
-        state: present
 
     - name: ufw allow OpenSSH
       ufw:
@@ -49,42 +55,8 @@
         state: enabled
         policy: allow
 
-    - name: install python3-pip
-      apt:
-        name: python3-pip
-        state: present
-
-    - name: install python3-dev
-      apt:
-        name: python3-dev
-        state: present
-
-    - name: install libpq-dev
-      apt:
-        name: libpq-dev
-        state: present
-
-    - name: install postgresql
-      apt:
-        name: postgresql
-        state: present
-
-    - name: install postgresql-contrib
-      apt:
-        name: postgresql-contrib
-        state: present
-
-    - name: install nginx
-      apt:
-        name: nginx
-        state: present
-
     - name: ufw allow Nginx
       ufw:
         rule: allow
         name: Nginx Full
 
-    - name: install curl
-      apt:
-        name: curl
-        state: present

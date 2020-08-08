@@ -1,0 +1,37 @@
+---
+- hosts: playground
+  remote_user: "{{ deploy_user_name }}"
+  gather_facts: no
+  become_user: postgres
+  become: yes
+  vars_files:
+    - ../vars/project_vars.yml
+  tasks:
+    - name: create database
+      postgresql_db:
+        name: "{{ project_db_name }}"
+        state: present
+
+    - name: create db role
+      postgresql_user:
+        db: "{{ project_db_name }}"
+        name: "{{ project_db_user_name }}"
+        password: "{{ project_db_user_password }}"
+        priv: "ALL"
+
+    - name: set encoding to utf8
+      postgresql_query:
+        db: "{{ project_db_name }}"
+        query: "ALTER ROLE {{ project_db_user_name }} SET client_encoding TO 'utf8';"
+
+    - name: set default_transaction_isolation to committed
+      postgresql_query:
+        db: "{{ project_db_name }}"
+        query: "ALTER ROLE {{ project_db_user_name }} SET default_transaction_isolation TO 'read committed'"
+        positional_args:
+          - '{{ project_db_user_name }}'
+
+    - name: set timezone to UTC
+      postgresql_query:
+        db: "{{ project_db_name }}"
+        query: "ALTER ROLE {{ project_db_user_name }} SET timezone TO 'UTC'"
